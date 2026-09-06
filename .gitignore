@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Large artifacts and data directories
+artifacts_models/
+data_processed/
+test_artifacts/
+*.pth
+*.csv
+
+# Logs and scratch
+*.log
+scratch/
+.idea/
+.vscode/
+.venv/
+venv/

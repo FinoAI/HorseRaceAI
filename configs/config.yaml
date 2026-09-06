@@ -1,0 +1,69 @@
+# 競馬AI 設定ファイル
+data:
+  data_dir: "/Users/hinomasafumi/Data/main"
+  bac_filename: "BAC_KAB.csv"
+  train_years: [2018, 2019, 2020, 2021, 2022, 2023] # 必要に応じて2008〜2023に拡大可能
+  val_test_years: [2024, 2025]
+  val_ratio: 0.5 # 2024+2025 のうち半分をVal、半分をTest
+  random_seed: 42
+
+# 特徴量から除外するカラム（リーク防止・指定禁止カラム）
+feature_selection:
+  prohibited_columns:
+    - "KYI_枠確定馬体重増減"
+    - "KYI_基準オッズ"
+    - "KYI_基準人気順位"
+    - "KYI_基準複勝オッズ"
+    - "KYI_基準複勝人気順位"
+    - "KYI_IDM"
+    - "KYI_ＩＤＭ"
+  id_and_str_columns_to_drop:
+    - "KYI_馬名"
+    - "KYI_血統登録番号"
+    - "SUBV1_RACE_ID"
+    - "SUBV1_RACE_KEY"
+    - "SUBV2_RACE_ID"
+    - "SUBV2_RACE_KEY"
+    - "SUBV3_RACE_ID"
+    - "SUBV3_RACE_KEY"
+    - "SUBV4_RACE_ID"
+    - "SUBV4_RACE_KEY"
+    - "SUBV5_RACE_ID"
+    - "SUBV5_RACE_KEY"
+  yearly_sample_ratio: 0.35 # 各モデルで抽出する開催年カラムの割合
+
+# 前段モデル設定 (Stage 1)
+stage1:
+  num_models: 10
+  multiplier: 32          # 入力層: 入力パラメータ数 × 32
+  num_layers: 5           # 5段以上
+  dropout: 0.2
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  batch_size: 64          # レース単位
+  epochs: 15
+  early_stopping_patience: 3
+
+# 後段メタモデル設定 (Stage 2)
+stage2:
+  multiplier: 32          # 入力層: 入力パラメータ数 × 32
+  num_layers: 5           # 5段以上
+  dropout: 0.1
+  learning_rate: 0.0005
+  weight_decay: 0.00005
+  batch_size: 64
+  epochs: 20
+  early_stopping_patience: 4
+
+# シミュレーション・ベッティング設定
+simulation:
+  unit_bet_amount: 100    # 1点あたりの投票金額（円）
+  min_prob_threshold: 0.15 # 単勝購入対象とする最小予測確率
+  ev_threshold_grid: [0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.5, 1.8, 2.0]
+  target_hit_rate: 0.20   # 目標的中率 20%
+  target_roi: 1.00        # 目標回収率 100%
+
+# 保存先パス
+paths:
+  artifacts_dir: "/Users/hinomasafumi/program/HorseRaceAI/artifacts_models"
+  data_processed_dir: "/Users/hinomasafumi/program/HorseRaceAI/data_processed"
