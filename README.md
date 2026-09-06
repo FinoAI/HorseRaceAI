@@ -1,4 +1,4 @@
-# 競馬AI 勝ち馬予測・回収率向上モデル (Ensemble LLM-like Stacking AI)
+# 競馬AI 勝ち馬予測・高配当/回収率向上モデル (Ensemble LLM-like Stacking AI)
 
 本システムは、JRDBの開催年別競走馬データ（約1,380列）およびレース条件データ（`BAC_KAB.csv`）を統合し、**単勝的中率20%超**および**回収率100%超**を達成するために構築されたアンサンブル・ディープラーニング競馬AIです。
 
@@ -39,38 +39,25 @@
 
 ---
 
-## 2. ディレクトリ構成
+## 2. 払戻金（高配当）最大化評価オプション
 
-```
-HorseRaceAI/
-├── configs/
-│   └── config.yaml            # パス、ハイパーパラメータ、除外カラム等の設定
-├── artifacts_models/          # モデル重み (.pth) および 特徴量JSON (.json)
-│   ├── features_model_1.json  # 各モデルが使用した特徴量リスト
-│   ├── ...
-│   ├── features_model_10.json
-│   ├── model_1.pth ... model_10.pth
-│   └── meta_model.pth
-├── src/
-│   ├── data/
-│   │   ├── loader.py          # BAC_KAB結合、2024/2025シャッフル分割
-│   │   └── preprocessor.py    # 禁止カラム除外、サンプリング、JSON保存、正規化
-│   ├── models/
-│   │   ├── base_nn.py         # 5層以上・入力×32倍のModern MLP
-│   │   └── meta_nn.py         # 5層以上の後段メタNN
-│   ├── training/
-│   │   ├── train_stage1.py    # 前段10モデルの学習・予測
-│   │   └── train_stage2.py    # 後段メタNNの学習・レース内Softmax
-│   ├── evaluation/
-│   │   ├── metrics.py         # Top-1 的中率計算
-│   │   └── simulation.py      # 回収率シミュレーション・EV最適化
-│   └── utils/
-│       └── helpers.py         # シード固定、JSON保存、ロガー、デバイス判定
-├── run_pipeline.py            # 全工程一括実行スクリプト
-├── test_pipeline_components.py# データ結合・前処理・シミュレーション疎通テスト
-├── requirements.txt           # 依存パッケージ一覧
-└── README.md
-```
+ユーザー様のご要望に応じて、以下の評価・馬券選定モードを追加しています（`configs/config.yaml` で切り替え可能）。
+
+### 2.1 評価関数（Validationモデル選択基準）
+- `eval_metric: "payout"`:
+  - 選択した馬の払戻金（**`Target_単勝 * (Target_着順 == 1)`**、着外なら 0）を集計。
+  - 回収率（総払戻額 / 総投資額）が最大のエポックを最良モデルとして自動保存します。
+- `eval_metric: "hybrid"`: 回収率 × 的中率20%制約ペナルティ。
+- `eval_metric: "hit_rate"`: 単勝的中率重視。
+
+### 2.2 馬券・予想選定モード (`selection_mode`)
+1. **`prob` (予測勝率最大)**:
+   - レース内で最も勝率 $P$ が高いと推計された馬を選択（本命・対抗寄り）。
+2. **`ev` (期待値最大 ★高配当狙い)**:
+   - $\text{EV} = P \times \text{確定オッズ}$ が最大の馬を選択。市場オッズに対してモデル評価が際立って高い妙味馬・穴馬を抽出。
+3. **`ev_filtered` (推奨 ★的中率20%と回収率100%超の両立)**:
+   - 最低予測勝率（例: $P \ge 10\%$）を担保した上で、$\text{EV}$ が最大の馬を選択。
+   - 的中率の急落を防ぎながら、過小評価された中穴〜高配当馬をピンポイントで的中させます。
 
 ---
 
@@ -83,31 +70,12 @@ Python 3.10〜3.12 (GPU環境推奨) にて実行してください。
 pip install -r requirements.txt
 ```
 
-※PyTorchのGPU版は環境に応じて [PyTorch公式サイト](https://pytorch.org/) のコマンドで導入してください（CUDA 11.8/12.1対応など）。
-
-### 3.2 疎通テスト（データ結合 & 特徴量選定 & シミュレーション検証）
-小規模レースサンプリングで全機能の連携を確認します:
-
+### 3.2 疎通テスト（データ結合 & 特徴量選定 & 払戻金評価検証）
 ```bash
 python test_pipeline_components.py
 ```
 
 ### 3.3 本番モデル学習・評価・シミュレーション実行
-全データを対象に、Stage 1 (10モデル) → Stage 2 (メタNN) → テスト評価 を一括実行します:
-
 ```bash
 python run_pipeline.py --config configs/config.yaml
 ```
-
----
-
-## 4. 的中率20%超・回収率100%超を達成する戦略
-
-### 4.1 期待値 (EV) フィルタリング
-本モデルは単なる人気順やオッズ情報に依存せず、レース条件と馬の過去走・能力値から「真の勝率 $P$」を推計します。
-$$ \text{EV} = P \times \text{確定オッズ} $$
-- 市場オッズに対してモデル勝率が高い（$\text{EV} \ge 1.05 \sim 1.20$）馬のみを狙い撃ちすることで、控除率（JRA単勝約20%）を克服し**回収率100%超**を実現します。
-
-### 4.2 確信度 (予測勝率) フィルタリング
-- 出走頭数14〜18頭の混戦レースを避け、モデルが確信を持っているレース（予測確率 $\ge 20\%$）に絞って購入することで、**単勝的中率20%超（通常平均の約3倍）** を維持します。
-- 実行結果は `artifacts_models/simulation_results.csv` に全グリッドサーチ結果が出力されます。

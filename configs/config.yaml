@@ -2,10 +2,17 @@
 data:
   data_dir: "/Users/hinomasafumi/Data/main"
   bac_filename: "BAC_KAB.csv"
-  train_years: [2018, 2019, 2020, 2021, 2022, 2023] # 必要に応じて2008〜2023に拡大可能
+  train_years: [2018, 2019, 2020, 2021, 2022, 2023]
   val_test_years: [2024, 2025]
   val_ratio: 0.5 # 2024+2025 のうち半分をVal、半分をTest
   random_seed: 42
+
+# 評価・選定設定 (高配当・払戻金最大化オプション)
+evaluation:
+  eval_metric: "payout"     # "payout" (Target_単勝*着順1払戻金最大化) | "hit_rate" (的中率) | "hybrid" (回収率×的中率制約)
+  selection_mode: "ev_filtered" # "prob" (予測勝率最大) | "ev" (期待値最大) | "ev_filtered" (勝率下限付きEV最大)
+  min_prob_for_ev: 0.10     # ev_filtered時の最低必要予測勝率
+  loss_weighting: "none"    # "none" | "payout" (配当重み付き損失関数)
 
 # 特徴量から除外するカラム（リーク防止・指定禁止カラム）
 feature_selection:

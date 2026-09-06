@@ -9,7 +9,7 @@ from src.data.loader import get_train_val_test_datasets
 from src.data.preprocessor import FeaturePreprocessor, extract_target_and_meta
 from src.training.train_stage1 import train_single_stage1_model, predict_stage1_model
 from src.training.train_stage2 import build_meta_features, train_meta_model, predict_meta_model
-from src.evaluation.metrics import calculate_top1_hit_rate
+from src.evaluation.metrics import calculate_top1_hit_rate, calculate_payout_metric
 from src.evaluation.simulation import BetSimulator
 
 logger = setup_logger("MainPipeline")
@@ -19,6 +19,14 @@ def run(config_path: str, sample_races: int = None):
     set_seed(cfg["data"]["random_seed"])
     device = get_device()
     logger.info(f"Using compute device: {device}")
+
+    eval_cfg = cfg.get("evaluation", {})
+    eval_metric = eval_cfg.get("eval_metric", "payout")
+    selection_mode = eval_cfg.get("selection_mode", "ev_filtered")
+    min_prob_for_ev = eval_cfg.get("min_prob_for_ev", 0.10)
+    loss_weighting = eval_cfg.get("loss_weighting", "none")
+
+    logger.info(f"Evaluation Config: metric={eval_metric}, selection_mode={selection_mode}, min_prob={min_prob_for_ev}, loss_weighting={loss_weighting}")
 
     artifacts_dir = cfg["paths"]["artifacts_dir"]
     os.makedirs(artifacts_dir, exist_ok=True)
@@ -35,12 +43,10 @@ def run(config_path: str, sample_races: int = None):
         sample_n_races_per_year=sample_races
     )
 
-    # ターゲット・メタデータ抽出
     y_train, meta_train = extract_target_and_meta(df_train)
     y_val, meta_val = extract_target_and_meta(df_val)
     y_test, meta_test = extract_target_and_meta(df_test)
 
-    # 前処理クラス初期化
     preprocessor = FeaturePreprocessor(
         prohibited_columns=cfg["feature_selection"]["prohibited_columns"],
         id_and_str_columns=cfg["feature_selection"]["id_and_str_columns_to_drop"],
@@ -59,7 +65,6 @@ def run(config_path: str, sample_races: int = None):
 
     for idx in range(1, num_models + 1):
         logger.info(f"\n>>> [Stage 1] Training Model {idx}/{num_models} <<<")
-        # 特徴量サンプリング (BAC全量 + 開催年ランダム抽出) & JSON保存
         selected_features = preprocessor.sample_features_for_model(
             model_idx=idx,
             yearly_candidate_cols=yearly_candidates,
@@ -67,31 +72,32 @@ def run(config_path: str, sample_races: int = None):
             random_seed=cfg["data"]["random_seed"]
         )
 
-        # 特徴量変換 (標準化)
         X_tr = preprocessor.fit_transform_features(df_train, selected_features, model_idx=idx)
         X_va = preprocessor.transform_features(df_val, selected_features, model_idx=idx)
         X_te = preprocessor.transform_features(df_test, selected_features, model_idx=idx)
 
-        # モデル学習
-        model, best_hit_rate = train_single_stage1_model(
+        model, best_score = train_single_stage1_model(
             model_idx=idx,
             X_train=X_tr,
             y_train=y_train,
-            race_ids_train=meta_train["RACE_ID"].values,
+            meta_train=meta_train,
             X_val=X_va,
             y_val=y_val,
-            race_ids_val=meta_val["RACE_ID"].values,
+            meta_val=meta_val,
             multiplier=cfg["stage1"]["multiplier"],
             dropout=cfg["stage1"]["dropout"],
             learning_rate=cfg["stage1"]["learning_rate"],
             weight_decay=cfg["stage1"]["weight_decay"],
             epochs=cfg["stage1"]["epochs"],
             early_stopping_patience=cfg["stage1"]["early_stopping_patience"],
+            eval_metric=eval_metric,
+            selection_mode=selection_mode,
+            min_prob_for_ev=min_prob_for_ev,
+            loss_weighting=loss_weighting,
             artifacts_dir=artifacts_dir,
             device=device
         )
 
-        # 予測確率の算出
         val_pred = predict_stage1_model(model, X_va, device=device)
         test_pred = predict_stage1_model(model, X_te, device=device)
         val_preds_list.append(val_pred)
@@ -102,16 +108,19 @@ def run(config_path: str, sample_races: int = None):
     X_val_meta = build_meta_features(val_preds_list)
     X_test_meta = build_meta_features(test_preds_list)
 
-    meta_model, meta_best_hit_rate = train_meta_model(
+    meta_model, meta_best_score = train_meta_model(
         X_val_meta=X_val_meta,
         y_val=y_val,
-        race_ids_val=meta_val["RACE_ID"].values,
+        meta_val=meta_val,
         multiplier=cfg["stage2"]["multiplier"],
         dropout=cfg["stage2"]["dropout"],
         learning_rate=cfg["stage2"]["learning_rate"],
         weight_decay=cfg["stage2"]["weight_decay"],
         epochs=cfg["stage2"]["epochs"],
         early_stopping_patience=cfg["stage2"]["early_stopping_patience"],
+        eval_metric=eval_metric,
+        selection_mode=selection_mode,
+        min_prob_for_ev=min_prob_for_ev,
         artifacts_dir=artifacts_dir,
         device=device
     )
@@ -128,21 +137,16 @@ def run(config_path: str, sample_races: int = None):
     df_test_eval = meta_test.copy()
     df_test_eval["prob"] = test_final_probs
 
-    # 予測結果CSVの保存
     preds_output_path = os.path.join(artifacts_dir, "test_predictions.csv")
     df_test_eval.to_csv(preds_output_path, index=False)
     logger.info(f"Saved test predictions to {preds_output_path}")
 
-    # 的中率
-    top1_metrics = calculate_top1_hit_rate(df_test_eval)
-    logger.info(f"Test Top-1 Hit Rate: {top1_metrics['hit_rate']*100:.2f}% ({top1_metrics['hits']}/{top1_metrics['total_races']} races)")
+    # 各種戦略での払戻金（Target_単勝 * 着順1）評価
+    eval_prob = calculate_payout_metric(df_test_eval, selection_mode="prob")
+    eval_ev = calculate_payout_metric(df_test_eval, selection_mode="ev")
+    eval_ev_filt = calculate_payout_metric(df_test_eval, selection_mode="ev_filtered", min_prob=min_prob_for_ev)
 
-    # ベッティングシミュレーション
     simulator = BetSimulator(unit_bet=cfg["simulation"]["unit_bet_amount"])
-    flat_res = simulator.simulate_flat_bet(df_test_eval)
-    logger.info(f"[Flat Bet] Hit Rate: {flat_res['hit_rate']*100:.2f}%, ROI: {flat_res['roi']*100:.2f}%")
-
-    # グリッドサーチ評価
     df_sim_results = simulator.grid_search_strategies(
         df_test_eval,
         ev_grid=cfg["simulation"]["ev_threshold_grid"],
@@ -150,30 +154,33 @@ def run(config_path: str, sample_races: int = None):
     )
     sim_output_path = os.path.join(artifacts_dir, "simulation_results.csv")
     df_sim_results.to_csv(sim_output_path, index=False)
-    logger.info(f"Saved simulation grid search results to {sim_output_path}")
 
-    # 目標達成戦略（的中率 >= 20% かつ 回収率 >= 100%）の抽出
+    print("\n" + "="*75)
+    print("                ★ 競馬AI 払戻金最大化 & 評価結果サマリー ★")
+    print("="*75)
+    print(f"テスト対象レース数: {eval_prob['total_races']} レース (2024-2025年シャッフル)")
+    print("-"*75)
+    print("【各馬券選定方式における成績比較 (払戻金額 = Target_単勝 * (着順==1))】")
+    print(f"1. 予測勝率最大 (prob)       : 的中率 {eval_prob['hit_rate']*100:5.2f}% | 回収率 {eval_prob['roi']*100:6.2f}% (払戻: ¥{eval_prob['total_payout']:,.0f})")
+    print(f"2. 期待値最大 (ev - 穴狙い)   : 的中率 {eval_ev['hit_rate']*100:5.2f}% | 回収率 {eval_ev['roi']*100:6.2f}% (払戻: ¥{eval_ev['total_payout']:,.0f})")
+    print(f"3. フィルタ付き期待値最大     : 的中率 {eval_ev_filt['hit_rate']*100:5.2f}% | 回収率 {eval_ev_filt['roi']*100:6.2f}% (払戻: ¥{eval_ev_filt['total_payout']:,.0f})")
+    print(f"   (勝率 >= {min_prob_for_ev*100:.0f}% かつ EV最大 ★推奨)")
+    print("-"*75)
+    
+    # 目標達成戦略（的中率 >= 20% かつ 回収率 >= 100%）
     target_hits = df_sim_results[
         (df_sim_results["hit_rate"] >= cfg["simulation"]["target_hit_rate"]) &
         (df_sim_results["roi"] >= cfg["simulation"]["target_roi"]) &
-        (df_sim_results["num_bets"] >= 10) # 最低10レース以上
+        (df_sim_results["num_bets"] >= 10)
     ]
-
-    print("\n" + "="*70)
-    print("                ★ 競馬AI 最終評価結果サマリー ★")
-    print("="*70)
-    print(f"テスト対象レース数: {top1_metrics['total_races']} レース (2024-2025年シャッフル)")
-    print(f"Top-1 単勝的中率:  {top1_metrics['hit_rate']*100:.2f}% (目標: 20%以上)")
-    print(f"Top-1 ベタ買い回収率: {flat_res['roi']*100:.2f}%")
-    print("-"*70)
     if len(target_hits) > 0:
         print("【目標達成 (的中率>=20% かつ 回収率>=100%) のベッティング戦略】:")
         print(target_hits[["strategy", "num_bets", "hits", "hit_rate", "roi"]].to_string(index=False))
     else:
-        print("※指定条件（的中率20%超 & 回収率100%超）の上位戦略:")
+        print("※高回収率上位戦略 (EVフィルタリング):")
         top_candidates = df_sim_results.sort_values("roi", ascending=False).head(5)
         print(top_candidates[["strategy", "num_bets", "hits", "hit_rate", "roi"]].to_string(index=False))
-    print("="*70 + "\n")
+    print("="*75 + "\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="競馬AI パイプライン")

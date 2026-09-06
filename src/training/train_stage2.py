@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from typing import Tuple
 from src.models.meta_nn import DeepMetaNN
+from src.evaluation.metrics import calculate_payout_metric
 from src.utils.helpers import setup_logger, get_device
 
 logger = setup_logger("TrainStage2")
@@ -30,31 +31,34 @@ def build_meta_features(preds_list: list) -> np.ndarray:
 def train_meta_model(
     X_val_meta: np.ndarray,
     y_val: np.ndarray,
-    race_ids_val: np.ndarray,
+    meta_val: pd.DataFrame,
     multiplier: int = 32,
     dropout: float = 0.1,
     learning_rate: float = 0.0005,
     weight_decay: float = 0.00005,
     epochs: int = 20,
     early_stopping_patience: int = 4,
+    eval_metric: str = "payout", # "payout" | "hit_rate" | "hybrid"
+    selection_mode: str = "ev_filtered", # "prob" | "ev" | "ev_filtered"
+    min_prob_for_ev: float = 0.10,
     artifacts_dir: str = "./artifacts_models",
     device: torch.device = None
 ) -> Tuple[nn.Module, float]:
     """
-    後段メタNN（最終予想モデル）の学習
+    後段メタNN（最終予想モデル）の学習 (払戻金最大化 / 期待値最大化オプション対応)
     """
     if device is None:
         device = get_device()
 
     input_dim = X_val_meta.shape[1]
-    logger.info(f"--- [Meta Model] Initializing DeepMetaNN: input_dim={input_dim}, multiplier={multiplier}, 1st layer={input_dim * multiplier} units ---")
+    logger.info(f"--- [Meta Model] DeepMetaNN: input_dim={input_dim}, 1st layer={input_dim * multiplier} | Eval={eval_metric} (mode={selection_mode}) ---")
 
     model = DeepMetaNN(input_dim=input_dim, multiplier=multiplier, dropout=dropout).to(device)
     optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.5, patience=1)
     criterion = nn.BCEWithLogitsLoss()
 
-    best_val_hit_rate = -1.0
+    best_score = -1.0
     patience_counter = 0
     best_model_path = os.path.join(artifacts_dir, "meta_model.pth")
 
@@ -86,23 +90,32 @@ def train_meta_model(
         avg_loss = epoch_loss / max(1, n_batches)
 
         # 評価
-        model.eval()
-        with torch.no_grad():
-            full_logits = model(X_t.to(device)).cpu().numpy()
+        probs = predict_meta_model(model, X_val_meta, meta_val["RACE_ID"].values, device=device)
+        df_eval = meta_val.copy()
+        df_eval["prob"] = probs
 
-        df_eval = pd.DataFrame({
-            "RACE_ID": race_ids_val,
-            "logit": full_logits,
-            "target": y_val
-        })
-        top1 = df_eval.sort_values(["RACE_ID", "logit"], ascending=[True, False]).groupby("RACE_ID").head(1)
-        val_hit_rate = (top1["target"] == 1).mean() if len(top1) > 0 else 0.0
+        payout_metrics = calculate_payout_metric(
+            df_eval,
+            selection_mode=selection_mode,
+            min_prob=min_prob_for_ev
+        )
 
-        scheduler.step(val_hit_rate)
-        logger.info(f"[Meta Model] Epoch {epoch}/{epochs} | Loss: {avg_loss:.4f} | Val Top-1 Hit Rate: {val_hit_rate:.4f}")
+        if eval_metric == "payout":
+            current_score = payout_metrics["roi"]
+        elif eval_metric == "hybrid":
+            current_score = payout_metrics["hybrid_score"]
+        else:
+            current_score = payout_metrics["hit_rate"]
 
-        if val_hit_rate > best_val_hit_rate:
-            best_val_hit_rate = val_hit_rate
+        scheduler.step(current_score)
+        logger.info(
+            f"[Meta Model] Epoch {epoch}/{epochs} | Loss: {avg_loss:.4f} | "
+            f"Hit Rate: {payout_metrics['hit_rate']*100:.2f}% | ROI: {payout_metrics['roi']*100:.2f}% | "
+            f"Eval Score ({eval_metric}): {current_score:.4f}"
+        )
+
+        if current_score > best_score:
+            best_score = current_score
             torch.save(model.state_dict(), best_model_path)
             patience_counter = 0
         else:
@@ -111,9 +124,9 @@ def train_meta_model(
                 logger.info(f"[Meta Model] Early stopping triggered at epoch {epoch}")
                 break
 
-    logger.info(f"[Meta Model] Best Val Top-1 Hit Rate: {best_val_hit_rate:.4f} (Saved to {best_model_path})")
+    logger.info(f"[Meta Model] Best {eval_metric} Score: {best_score:.4f} (Saved to {best_model_path})")
     model.load_state_dict(torch.load(best_model_path, map_location=device))
-    return model, best_val_hit_rate
+    return model, best_score
 
 def predict_meta_model(model: nn.Module, X_meta: np.ndarray, race_ids: np.ndarray, device: torch.device) -> np.ndarray:
     """
@@ -124,7 +137,6 @@ def predict_meta_model(model: nn.Module, X_meta: np.ndarray, race_ids: np.ndarra
     with torch.no_grad():
         logits = model(X_t.to(device)).cpu().numpy()
 
-    # 高速・安全なレース内Softmax計算
     probs = np.zeros_like(logits, dtype=np.float32)
     unique_races = np.unique(race_ids)
     
