@@ -29,6 +29,9 @@ def build_meta_features(preds_list: list) -> np.ndarray:
     return meta_features.astype(np.float32)
 
 def train_meta_model(
+    X_train_meta: np.ndarray,
+    y_train: np.ndarray,
+    meta_train: pd.DataFrame,
     X_val_meta: np.ndarray,
     y_val: np.ndarray,
     meta_val: pd.DataFrame,
@@ -41,31 +44,46 @@ def train_meta_model(
     eval_metric: str = "payout", # "payout" | "hit_rate" | "hybrid"
     selection_mode: str = "ev_filtered", # "prob" | "ev" | "ev_filtered"
     min_prob_for_ev: float = 0.10,
+    loss_weighting: str = "none", # "none" | "payout"
     artifacts_dir: str = "./artifacts_models",
     device: torch.device = None
 ) -> Tuple[nn.Module, float]:
     """
-    後段メタNN（最終予想モデル）の学習 (払戻金最大化 / 期待値最大化オプション対応)
+    後段メタNN（最終予想モデル）の学習
+    - X_train_meta でモデルを学習し、完全に独立した X_val_meta で Early Stopping を判定（データリーク・過学習を防止）
+    - loss_weighting="payout" による配当重み付き損失に対応
     """
     if device is None:
         device = get_device()
 
-    input_dim = X_val_meta.shape[1]
-    logger.info(f"--- [Meta Model] DeepMetaNN: input_dim={input_dim}, 1st layer={input_dim * multiplier} | Eval={eval_metric} (mode={selection_mode}) ---")
+    input_dim = X_train_meta.shape[1]
+    logger.info(
+        f"--- [Meta Model] DeepMetaNN: input_dim={input_dim}, 1st layer={input_dim * multiplier} | "
+        f"Eval={eval_metric} (mode={selection_mode}) | loss_weighting={loss_weighting} ---"
+    )
 
     model = DeepMetaNN(input_dim=input_dim, multiplier=multiplier, dropout=dropout).to(device)
     optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.5, patience=1)
-    criterion = nn.BCEWithLogitsLoss()
+
+    # 配当重み付き損失の準備 (Stage 2)
+    if loss_weighting == "payout":
+        odds = pd.to_numeric(meta_train.get("Target_確定単勝オッズ", 1.0), errors="coerce").fillna(1.0).values
+        sample_weights = np.where(y_train == 1, 1.0 + np.log1p(odds), 1.0).astype(np.float32)
+        sample_weights_t = torch.tensor(sample_weights, dtype=torch.float32)
+        criterion = nn.BCEWithLogitsLoss(reduction="none")
+    else:
+        sample_weights_t = None
+        criterion = nn.BCEWithLogitsLoss()
 
     best_score = -1.0
     patience_counter = 0
     best_model_path = os.path.join(artifacts_dir, "meta_model.pth")
 
-    X_t = torch.tensor(X_val_meta, dtype=torch.float32)
-    y_t = torch.tensor(y_val, dtype=torch.float32)
+    X_tr_t = torch.tensor(X_train_meta, dtype=torch.float32)
+    y_tr_t = torch.tensor(y_train, dtype=torch.float32)
 
-    num_samples = len(X_val_meta)
+    num_samples = len(X_train_meta)
     batch_size = 2048
 
     for epoch in range(1, epochs + 1):
@@ -76,11 +94,18 @@ def train_meta_model(
 
         for i in range(0, num_samples, batch_size):
             indices = permutation[i:i + batch_size]
-            bx, by = X_t[indices].to(device), y_t[indices].to(device)
+            bx = X_tr_t[indices].to(device)
+            by = y_tr_t[indices].to(device)
 
             optimizer.zero_grad()
             logits = model(bx)
-            loss = criterion(logits, by)
+            
+            if sample_weights_t is not None:
+                b_weights = sample_weights_t[indices].to(device)
+                loss = (criterion(logits, by) * b_weights).mean()
+            else:
+                loss = criterion(logits, by)
+
             loss.backward()
             optimizer.step()
 
@@ -89,7 +114,7 @@ def train_meta_model(
 
         avg_loss = epoch_loss / max(1, n_batches)
 
-        # 評価
+        # 独立した Validation データ (X_val_meta) による Early Stopping 評価
         probs = predict_meta_model(model, X_val_meta, meta_val["RACE_ID"].values, device=device)
         df_eval = meta_val.copy()
         df_eval["prob"] = probs
@@ -110,7 +135,7 @@ def train_meta_model(
         scheduler.step(current_score)
         logger.info(
             f"[Meta Model] Epoch {epoch}/{epochs} | Loss: {avg_loss:.4f} | "
-            f"Hit Rate: {payout_metrics['hit_rate']*100:.2f}% | ROI: {payout_metrics['roi']*100:.2f}% | "
+            f"Val Hit Rate: {payout_metrics['hit_rate']*100:.2f}% | Val ROI: {payout_metrics['roi']*100:.2f}% | "
             f"Eval Score ({eval_metric}): {current_score:.4f}"
         )
 

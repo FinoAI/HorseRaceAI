@@ -31,7 +31,7 @@ def run(config_path: str, sample_races: int = None):
     artifacts_dir = cfg["paths"]["artifacts_dir"]
     os.makedirs(artifacts_dir, exist_ok=True)
 
-    # 1. データロード
+    # 1. データロード (Train: 過去年, Val/Test: 2024+2025 シャッフル)
     logger.info("=== Step 1: Loading Datasets (Train / Val / Test) ===")
     df_train, df_val, df_test, bac_feature_cols = get_train_val_test_datasets(
         data_dir=cfg["data"]["data_dir"],
@@ -43,8 +43,25 @@ def run(config_path: str, sample_races: int = None):
         sample_n_races_per_year=sample_races
     )
 
+    # Stage 2 での過学習・データリークを防ぐため、Val データをレース単位でさらに 2 分割:
+    # - df_val_tr (Stage 2 メタモデルの学習用)
+    # - df_val_ev (Stage 2 メタモデルの Early Stopping 評価用)
+    val_races = np.array(df_val["RACE_ID"].drop_duplicates().tolist())
+    rng = np.random.default_rng(cfg["data"]["random_seed"])
+    rng.shuffle(val_races)
+    n_half = max(1, len(val_races) // 2)
+    val_tr_races = set(val_races[:n_half])
+    val_ev_races = set(val_races[n_half:])
+
+    df_val_tr = df_val[df_val["RACE_ID"].isin(val_tr_races)].reset_index(drop=True)
+    df_val_ev = df_val[df_val["RACE_ID"].isin(val_ev_races)].reset_index(drop=True)
+
+    logger.info(f"Val split for Stage 2: Stage2-Train={df_val_tr.shape} ({len(val_tr_races)} races), Stage2-Eval={df_val_ev.shape} ({len(val_ev_races)} races)")
+
+    # ターゲット・メタデータ抽出
     y_train, meta_train = extract_target_and_meta(df_train)
-    y_val, meta_val = extract_target_and_meta(df_val)
+    y_val_tr, meta_val_tr = extract_target_and_meta(df_val_tr)
+    y_val_ev, meta_val_ev = extract_target_and_meta(df_val_ev)
     y_test, meta_test = extract_target_and_meta(df_test)
 
     preprocessor = FeaturePreprocessor(
@@ -60,7 +77,8 @@ def run(config_path: str, sample_races: int = None):
     # 2. 前段10モデル (Stage 1) の学習 & 予測
     logger.info("=== Step 2: Training 10 Stage-1 Models (Random Subspace + 5-Layer Deep NN) ===")
     num_models = cfg["stage1"]["num_models"]
-    val_preds_list = []
+    val_tr_preds_list = []
+    val_ev_preds_list = []
     test_preds_list = []
 
     for idx in range(1, num_models + 1):
@@ -73,17 +91,19 @@ def run(config_path: str, sample_races: int = None):
         )
 
         X_tr = preprocessor.fit_transform_features(df_train, selected_features, model_idx=idx)
-        X_va = preprocessor.transform_features(df_val, selected_features, model_idx=idx)
+        X_va_tr = preprocessor.transform_features(df_val_tr, selected_features, model_idx=idx)
+        X_va_ev = preprocessor.transform_features(df_val_ev, selected_features, model_idx=idx)
         X_te = preprocessor.transform_features(df_test, selected_features, model_idx=idx)
 
+        # Stage 1 は df_train で学習し、df_val_ev で Early Stopping 判定
         model, best_score = train_single_stage1_model(
             model_idx=idx,
             X_train=X_tr,
             y_train=y_train,
             meta_train=meta_train,
-            X_val=X_va,
-            y_val=y_val,
-            meta_val=meta_val,
+            X_val=X_va_ev,
+            y_val=y_val_ev,
+            meta_val=meta_val_ev,
             multiplier=cfg["stage1"]["multiplier"],
             dropout=cfg["stage1"]["dropout"],
             learning_rate=cfg["stage1"]["learning_rate"],
@@ -98,20 +118,28 @@ def run(config_path: str, sample_races: int = None):
             device=device
         )
 
-        val_pred = predict_stage1_model(model, X_va, device=device)
+        val_tr_pred = predict_stage1_model(model, X_va_tr, device=device)
+        val_ev_pred = predict_stage1_model(model, X_va_ev, device=device)
         test_pred = predict_stage1_model(model, X_te, device=device)
-        val_preds_list.append(val_pred)
+
+        val_tr_preds_list.append(val_tr_pred)
+        val_ev_preds_list.append(val_ev_pred)
         test_preds_list.append(test_pred)
 
     # 3. 後段メタNN (Stage 2) の学習 & 最終予測
     logger.info("\n=== Step 3: Training Stage-2 Meta NN (Ensemble LLM-like Stacking) ===")
-    X_val_meta = build_meta_features(val_preds_list)
+    X_val_tr_meta = build_meta_features(val_tr_preds_list)
+    X_val_ev_meta = build_meta_features(val_ev_preds_list)
     X_test_meta = build_meta_features(test_preds_list)
 
+    # Stage 2 は X_val_tr_meta で学習し、独立した X_val_ev_meta で Early Stopping (データリーク解消)
     meta_model, meta_best_score = train_meta_model(
-        X_val_meta=X_val_meta,
-        y_val=y_val,
-        meta_val=meta_val,
+        X_train_meta=X_val_tr_meta,
+        y_train=y_val_tr,
+        meta_train=meta_val_tr,
+        X_val_meta=X_val_ev_meta,
+        y_val=y_val_ev,
+        meta_val=meta_val_ev,
         multiplier=cfg["stage2"]["multiplier"],
         dropout=cfg["stage2"]["dropout"],
         learning_rate=cfg["stage2"]["learning_rate"],
@@ -121,6 +149,7 @@ def run(config_path: str, sample_races: int = None):
         eval_metric=eval_metric,
         selection_mode=selection_mode,
         min_prob_for_ev=min_prob_for_ev,
+        loss_weighting=loss_weighting,
         artifacts_dir=artifacts_dir,
         device=device
     )
@@ -167,7 +196,6 @@ def run(config_path: str, sample_races: int = None):
     print(f"   (勝率 >= {min_prob_for_ev*100:.0f}% かつ EV最大 ★推奨)")
     print("-"*75)
     
-    # 目標達成戦略（的中率 >= 20% かつ 回収率 >= 100%）
     target_hits = df_sim_results[
         (df_sim_results["hit_rate"] >= cfg["simulation"]["target_hit_rate"]) &
         (df_sim_results["roi"] >= cfg["simulation"]["target_roi"]) &
