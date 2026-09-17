@@ -26,3 +26,5 @@ scratch/
 .vscode/
 .venv/
 venv/
+.venv39/
+test_artifacts_race/

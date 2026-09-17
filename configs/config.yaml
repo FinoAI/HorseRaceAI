@@ -1,4 +1,4 @@
-# 競馬AI 設定ファイル
+# 競馬AI 設定ファイル (レース単位入力・アンサンブル)
 data:
   data_dir: "/Users/hinomasafumi/Data/main"
   bac_filename: "BAC_KAB.csv"
@@ -6,6 +6,7 @@ data:
   val_test_years: [2024, 2025]
   val_ratio: 0.5 # 2024+2025 のうち半分をVal、半分をTest
   random_seed: 42
+  max_horses_per_race: 18 # JRAフルゲート最大頭数
 
 # 評価・選定設定 (高配当・払戻金最大化オプション)
 evaluation:
@@ -37,28 +38,29 @@ feature_selection:
     - "SUBV4_RACE_KEY"
     - "SUBV5_RACE_ID"
     - "SUBV5_RACE_KEY"
-  yearly_sample_ratio: 0.35 # 各モデルで抽出する開催年カラムの割合
+  # レース単位入力(18頭分)かつ32倍入力層のため、特徴量数を適正化
+  num_random_yearly_features: 14 # BAC_KAB(36列)に加え、開催年データからランダム抽出する列数 (合計50列)
 
-# 前段モデル設定 (Stage 1)
+# 前段モデル設定 (Stage 1: レース単位入力)
 stage1:
   num_models: 10
-  multiplier: 32          # 入力層: 入力パラメータ数 × 32
-  num_layers: 5           # 5段以上
+  multiplier: 32          # 入力層: (出走頭数18 × 特徴量数) × 32
+  reduction_ratio: 0.5    # 隠れ層の減衰ペース: 最大1/2ずつ縮小
   dropout: 0.2
-  learning_rate: 0.001
+  learning_rate: 0.0005
   weight_decay: 0.0001
-  batch_size: 64          # レース単位
+  batch_size: 128         # レース数単位
   epochs: 15
   early_stopping_patience: 3
 
-# 後段メタモデル設定 (Stage 2)
+# 後段メタモデル設定 (Stage 2: レース単位アンサンブル)
 stage2:
   multiplier: 32          # 入力層: 入力パラメータ数 × 32
-  num_layers: 5           # 5段以上
+  reduction_ratio: 0.5    # 隠れ層の減衰ペース: 最大1/2ずつ縮小
   dropout: 0.1
-  learning_rate: 0.0005
+  learning_rate: 0.0003
   weight_decay: 0.00005
-  batch_size: 64
+  batch_size: 128         # レース数単位
   epochs: 20
   early_stopping_patience: 4
 

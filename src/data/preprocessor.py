@@ -3,7 +3,7 @@ import os
 import random
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Any
 from src.utils.helpers import setup_logger, save_json
 
 logger = setup_logger("Preprocessor")
@@ -21,7 +21,7 @@ class FeaturePreprocessor:
         self.bac_feature_cols = [c for c in bac_feature_cols if c not in self.prohibited_columns and not c.startswith("Target_")]
         self.artifacts_dir = artifacts_dir
         os.makedirs(self.artifacts_dir, exist_ok=True)
-        self.scalers = {} # 各モデルごとの平均・標準偏差
+        self.scalers = {}
         self.fill_values = {}
 
     def get_candidate_yearly_columns(self, all_columns: List[str]) -> List[str]:
@@ -47,22 +47,26 @@ class FeaturePreprocessor:
         self,
         model_idx: int,
         yearly_candidate_cols: List[str],
-        sample_ratio: float = 0.35,
+        sample_count: int = 14,
+        sample_ratio: Optional[float] = None,
         random_seed: int = 42
     ) -> List[str]:
         """
-        前段モデル用の特徴量を決定（BAC_KABカラムは全使用 + 開催年カラムからランダム抽出）
-        選定されたカラムを JSON に保存
+        前段モデル用の特徴量を決定（BAC_KABカラムは全使用 + 開催年カラムから指定数ランダム抽出）
+        ※選定された特徴量はそのモデル内の全ての馬で完全に共通
+        選定されたカラムリストを JSON に保存
         """
         rng = random.Random(random_seed + model_idx)
-        k = int(len(yearly_candidate_cols) * sample_ratio)
-        k = max(10, min(k, len(yearly_candidate_cols)))
+        if sample_ratio is not None:
+            k = int(len(yearly_candidate_cols) * sample_ratio)
+        else:
+            k = sample_count
+        k = max(2, min(k, len(yearly_candidate_cols)))
         selected_yearly = rng.sample(yearly_candidate_cols, k)
         
         # BAC_KAB カラム（全使用） + ランダム抽出した開催年カラム
         selected_features = list(self.bac_feature_cols) + selected_yearly
         
-        # JSON保存
         json_path = os.path.join(self.artifacts_dir, f"features_model_{model_idx}.json")
         save_data = {
             "model_idx": model_idx,
@@ -72,7 +76,7 @@ class FeaturePreprocessor:
             "features": selected_features
         }
         save_json(save_data, json_path)
-        logger.info(f"[Model {model_idx}] Saved {len(selected_features)} features to {json_path}")
+        logger.info(f"[Model {model_idx}] Saved {len(selected_features)} features (BAC:{len(self.bac_feature_cols)} + Yearly:{len(selected_yearly)}) to {json_path}")
         return selected_features
 
     def fit_transform_features(
@@ -82,11 +86,9 @@ class FeaturePreprocessor:
         model_idx: int
     ) -> np.ndarray:
         """
-        指定された特徴量セットについて、Trainデータから統計量（平均・標準偏差・中央値）を計算して正規化
+        指定された特徴量セットについて、Trainデータから統計量を計算して正規化
         """
         sub_df = df_train[features].copy()
-        
-        # すべて数値に変換
         for c in features:
             sub_df[c] = pd.to_numeric(sub_df[c], errors="coerce")
 
@@ -101,10 +103,8 @@ class FeaturePreprocessor:
             "std": stds.to_dict()
         }
 
-        # 欠損補完 & 標準化
         sub_df = sub_df.fillna(medians)
         norm_arr = ((sub_df - means) / stds).values
-        # NaN / Inf 安全対策
         norm_arr = np.nan_to_num(norm_arr, nan=0.0, posinf=0.0, neginf=0.0)
         return norm_arr.astype(np.float32)
 
@@ -134,11 +134,9 @@ def extract_target_and_meta(df: pd.DataFrame) -> Tuple[np.ndarray, pd.DataFrame]
     """
     目的変数 (1着なら 1, それ以外 0) と評価用メタ情報を抽出
     """
-    # Target_着順 == 1 が正解
     order_col = pd.to_numeric(df["Target_着順"], errors="coerce").fillna(99)
     y = (order_col == 1).astype(np.float32).values
 
-    # 評価・シミュレーション用メタデータ
     meta_df = pd.DataFrame({
         "RACE_ID": df["RACE_ID"].astype(str),
         "KYI_RACE_KEY": df["KYI_RACE_KEY"].astype(str),
@@ -148,3 +146,72 @@ def extract_target_and_meta(df: pd.DataFrame) -> Tuple[np.ndarray, pd.DataFrame]
         "Target_単勝": pd.to_numeric(df.get("Target_単勝", np.nan), errors="coerce").values
     })
     return y, meta_df
+
+def build_race_level_dataset(
+    X_norm: np.ndarray,
+    meta_df: pd.DataFrame,
+    max_horses: int = 18
+) -> Dict[str, Any]:
+    """
+    馬単位の正規化特徴量を行列からレース単位のテンソル表現に変換。
+    各レースで馬番 (1〜18) のスロット (0〜17) に配置し、非出走スロットは 0 パディング。
+    
+    戻り値:
+      - 'race_X': shape (N_races, max_horses * D) のフラット化レース特徴量
+      - 'race_masks': shape (N_races, max_horses) の出走馬マスク (出走: 1.0, 未出走: 0.0)
+      - 'race_y': shape (N_races,) の1着馬スロットインデックス (0〜17)
+      - 'race_meta': レース単位のメタ情報辞書 (RACE_ID, odds (N, 18), payouts (N, 18), ranks (N, 18))
+    """
+    num_features = X_norm.shape[1]
+    
+    # レース順序を維持
+    race_ids_ordered = []
+    seen = set()
+    for r in meta_df["RACE_ID"].values:
+        if r not in seen:
+            seen.add(r)
+            race_ids_ordered.append(r)
+    
+    num_races = len(race_ids_ordered)
+    race_id_to_idx = {r: i for i, r in enumerate(race_ids_ordered)}
+    
+    race_X_3d = np.zeros((num_races, max_horses, num_features), dtype=np.float32)
+    race_masks = np.zeros((num_races, max_horses), dtype=np.float32)
+    race_y = np.zeros(num_races, dtype=np.int64)
+    race_odds = np.zeros((num_races, max_horses), dtype=np.float32)
+    race_payouts = np.zeros((num_races, max_horses), dtype=np.float32)
+    race_ranks = np.full((num_races, max_horses), 99.0, dtype=np.float32)
+
+    # 各馬のデータをレースと馬番スロットに配置
+    for i in range(len(meta_df)):
+        r_id = meta_df["RACE_ID"].iloc[i]
+        r_idx = race_id_to_idx[r_id]
+        horse_num = meta_df["KYI_馬番"].iloc[i]
+        
+        # 1〜18の範囲内
+        slot = horse_num - 1
+        if 0 <= slot < max_horses:
+            race_X_3d[r_idx, slot, :] = X_norm[i]
+            race_masks[r_idx, slot] = 1.0
+            
+            rank = meta_df["Target_着順"].iloc[i]
+            race_ranks[r_idx, slot] = rank
+            if rank == 1:
+                race_y[r_idx] = slot
+                
+            race_odds[r_idx, slot] = meta_df["Target_確定単勝オッズ"].iloc[i]
+            payout = meta_df["Target_単勝"].iloc[i]
+            race_payouts[r_idx, slot] = payout if not np.isnan(payout) else 0.0
+
+    # (N_races, max_horses * num_features) にフラット化
+    race_X = race_X_3d.reshape(num_races, max_horses * num_features)
+
+    return {
+        "race_X": race_X,
+        "race_masks": race_masks,
+        "race_y": race_y,
+        "race_ids": np.array(race_ids_ordered),
+        "odds": race_odds,
+        "payouts": race_payouts,
+        "ranks": race_ranks
+    }
