@@ -28,3 +28,6 @@ scratch/
 venv/
 .venv39/
 test_artifacts_race/
+build/
+bin/
+*.bin

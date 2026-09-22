@@ -68,3 +68,46 @@ python test_pipeline_components.py
 ```bash
 python run_pipeline.py --config configs/config.yaml
 ```
+
+---
+
+## 4. CUDA to Metal C言語 高速推論エンジン (Apple Metal GPU)
+
+PyTorchで学習したレース単位モデルを、**CUDAカーネルからApple Metal Shading Language (MSL) へ変換したコンピュートシェーダ**および**純粋なC言語インターフェース**を用いて、MacのGPU上で直接高速推論できるネイティブエンジンを搭載しています。
+
+### 4.1 CUDA to Metal 変換対応表
+| 概念 | CUDA | Metal (MSL) |
+| :--- | :--- | :--- |
+| カーネル関数宣言 | `__global__ void kernel(...)` | `kernel void kernel(...)` |
+| メモリアドレス空間 | グローバルポインタ | `device float* [[buffer(0)]]` |
+| 共有メモリ | `__shared__ float s_mem[N];` | `threadgroup float s_mem[N];` |
+| スレッドID | `threadIdx.x` | `uint tid [[thread_position_in_threadgroup]]` |
+| グリッド内グローバルID | `blockIdx.x * blockDim.x + tid` | `uint gid [[thread_position_in_grid]]` |
+| スレッドグループ同期 | `__syncthreads()` | `threadgroup_barrier(mem_flags::mem_threadgroup)` |
+
+### 4.2 C言語 API (`include/horse_race_metal.h`)
+```c
+#include "horse_race_metal.h"
+
+// 1. モデルとMetalシェーダの初期化
+HorseRaceMetalContext* ctx = horse_race_metal_init("artifacts_models/model_weights_test.bin", "src/metal/kernels.metal");
+
+// 2. レース特徴量と出走馬マスクを渡してGPU推論
+float out_probs[18];
+horse_race_metal_predict(ctx, race_features, horse_mask, out_probs);
+
+// 3. リソース解放
+horse_race_metal_free(ctx);
+```
+
+### 4.3 C言語エンジンのビルド & 実行
+```bash
+# 1. コンパイル
+make
+
+# 2. 推論実行
+./bin/horse_race_metal_cli artifacts_models/model_weights_test.bin src/metal/kernels.metal
+
+# 3. PyTorchとMetalの数値完全一致検証
+python tools/verify_metal_vs_pytorch.py
+```
