@@ -31,3 +31,4 @@ test_artifacts_race/
 build/
 bin/
 *.bin
+data_c/
