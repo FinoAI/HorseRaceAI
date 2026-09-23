@@ -2,7 +2,7 @@
 data:
   data_dir: "/Users/hinomasafumi/Data/main"
   bac_filename: "BAC_KAB.csv"
-  train_years: [2018, 2019, 2020, 2021, 2022, 2023]
+  train_years: [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
   val_test_years: [2024, 2025]
   val_ratio: 0.5 # 2024+2025 のうち半分をVal、半分をTest
   random_seed: 42

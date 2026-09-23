@@ -216,12 +216,12 @@ int main(int argc, char* argv[]) {
 
     // Phase 2: 最適な組み合わせ探索パラメータ
     printf("\n[3/5] Initializing Search Grid & Candidate Model Pool...\n");
-    float p_grid[] = {0.20f, 0.22f, 0.24f, 0.25f, 0.26f, 0.28f, 0.30f};
+    float p_grid[] = {0.15f, 0.18f, 0.20f, 0.22f, 0.24f, 0.25f, 0.28f, 0.30f, 0.32f};
     int num_p = sizeof(p_grid) / sizeof(float);
-    float ev_grid[] = {0.0f, 0.8f, 0.9f, 1.0f, 1.1f, 1.2f};
+    float ev_grid[] = {0.0f, 0.7f, 0.8f, 0.9f, 1.0f, 1.05f, 1.1f, 1.15f, 1.2f, 1.3f};
     int num_ev = sizeof(ev_grid) / sizeof(float);
 
-    int min_bets = 15; // 統計的有意性のための最低購入レース数
+    int min_bets = (val_meta.num_races >= 1000) ? 50 : 15; // 統計的有意性のための最低購入レース数 (最低50レース以上)
 
     // Phase 3: 超高速 局所探索 & グリッド探索 (Stochastic Local Search / 150,000 Iterations)
     printf("\n[4/5] Running High-Speed Stochastic Search in C (150,000 iterations)...\n");
