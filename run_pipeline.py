@@ -3,6 +3,7 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+import torch
 
 from src.utils.helpers import setup_logger, set_seed, load_config, get_device
 from src.data.loader import get_train_val_test_datasets
@@ -132,6 +133,10 @@ def run(config_path: str, sample_races: int = None):
         val_tr_preds_list.append(val_tr_pred)
         val_ev_preds_list.append(val_ev_pred)
         test_preds_list.append(test_pred)
+
+        del model
+        if hasattr(torch, "mps") and torch.backends.mps.is_available():
+            torch.mps.empty_cache()
 
     # 3. 後段メタNN (Stage 2: レース単位アンサンブル) の学習 & 最終予測
     logger.info("\n=== Step 3: Training Stage-2 Meta NN (Race-Level Stacking Ensemble) ===")

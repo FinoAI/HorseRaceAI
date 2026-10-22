@@ -1,0 +1,769 @@
+[
+  {
+    "trial_idx": 930,
+    "k": 2,
+    "models_1indexed": [
+      42,
+      47
+    ],
+    "test_roi": 1.0005326231691078,
+    "test_hit_rate": 0.20772303595206393,
+    "test_hits": 156,
+    "test_mean_odds": 4.816666666666666,
+    "test_payout": 75140.0,
+    "val_roi": 0.9472703062583222,
+    "val_hit_rate": 0.23169107856191745,
+    "val_mean_odds": 4.088505747126437
+  },
+  {
+    "trial_idx": 945,
+    "k": 2,
+    "models_1indexed": [
+      17,
+      24
+    ],
+    "test_roi": 1.1026631158455393,
+    "test_hit_rate": 0.23169107856191745,
+    "test_hits": 174,
+    "test_mean_odds": 4.75919540229885,
+    "test_payout": 82810.0,
+    "val_roi": 0.9809587217043941,
+    "val_hit_rate": 0.2237017310252996,
+    "val_mean_odds": 4.385119047619048
+  },
+  {
+    "trial_idx": 3076,
+    "k": 1,
+    "models_1indexed": [
+      24
+    ],
+    "test_roi": 1.0576564580559253,
+    "test_hit_rate": 0.21571238348868177,
+    "test_hits": 162,
+    "test_mean_odds": 4.903086419753087,
+    "test_payout": 79430.0,
+    "val_roi": 0.9769640479360853,
+    "val_hit_rate": 0.19307589880159787,
+    "val_mean_odds": 5.0600000000000005
+  },
+  {
+    "trial_idx": 3768,
+    "k": 3,
+    "models_1indexed": [
+      3,
+      20,
+      27
+    ],
+    "test_roi": 1.0121171770972037,
+    "test_hit_rate": 0.22636484687083888,
+    "test_hits": 170,
+    "test_mean_odds": 4.471176470588236,
+    "test_payout": 76010.0,
+    "val_roi": 0.751797603195739,
+    "val_hit_rate": 0.2396804260985353,
+    "val_mean_odds": 3.1366666666666667
+  },
+  {
+    "trial_idx": 5561,
+    "k": 6,
+    "models_1indexed": [
+      10,
+      15,
+      26,
+      27,
+      32,
+      39
+    ],
+    "test_roi": 1.0346205059920106,
+    "test_hit_rate": 0.2569906790945406,
+    "test_hits": 193,
+    "test_mean_odds": 4.025906735751295,
+    "test_payout": 77700.0,
+    "val_roi": 0.7133155792276964,
+    "val_hit_rate": 0.255659121171771,
+    "val_mean_odds": 2.790104166666667
+  },
+  {
+    "trial_idx": 7737,
+    "k": 4,
+    "models_1indexed": [
+      8,
+      27,
+      30,
+      32
+    ],
+    "test_roi": 1.0198402130492676,
+    "test_hit_rate": 0.22902796271637815,
+    "test_hits": 172,
+    "test_mean_odds": 4.452906976744186,
+    "test_payout": 76590.0,
+    "val_roi": 0.7243675099866844,
+    "val_hit_rate": 0.22237017310252996,
+    "val_mean_odds": 3.2574850299401197
+  },
+  {
+    "trial_idx": 13029,
+    "k": 2,
+    "models_1indexed": [
+      15,
+      24
+    ],
+    "test_roi": 1.0263648468708388,
+    "test_hit_rate": 0.237017310252996,
+    "test_hits": 178,
+    "test_mean_odds": 4.330337078651685,
+    "test_payout": 77080.0,
+    "val_roi": 0.9171770972037283,
+    "val_hit_rate": 0.22503328894806923,
+    "val_mean_odds": 4.0757396449704135
+  },
+  {
+    "trial_idx": 18829,
+    "k": 6,
+    "models_1indexed": [
+      22,
+      24,
+      27,
+      34,
+      46,
+      49
+    ],
+    "test_roi": 1.0826897470039947,
+    "test_hit_rate": 0.25432756324900135,
+    "test_hits": 191,
+    "test_mean_odds": 4.2570680628272255,
+    "test_payout": 81310.0,
+    "val_roi": 0.7920106524633822,
+    "val_hit_rate": 0.23834886817576564,
+    "val_mean_odds": 3.322905027932961
+  },
+  {
+    "trial_idx": 19872,
+    "k": 2,
+    "models_1indexed": [
+      24,
+      49
+    ],
+    "test_roi": 1.1717709720372835,
+    "test_hit_rate": 0.23302263648468707,
+    "test_hits": 175,
+    "test_mean_odds": 5.0285714285714285,
+    "test_payout": 88000.0,
+    "val_roi": 1.1679094540612516,
+    "val_hit_rate": 0.25033288948069243,
+    "val_mean_odds": 4.665425531914893
+  },
+  {
+    "trial_idx": 24617,
+    "k": 5,
+    "models_1indexed": [
+      8,
+      10,
+      27,
+      40,
+      47
+    ],
+    "test_roi": 1.0782956058588549,
+    "test_hit_rate": 0.24633821571238348,
+    "test_hits": 185,
+    "test_mean_odds": 4.377297297297297,
+    "test_payout": 80980.0,
+    "val_roi": 0.8279627163781624,
+    "val_hit_rate": 0.2569906790945406,
+    "val_mean_odds": 3.2217616580310877
+  },
+  {
+    "trial_idx": 29875,
+    "k": 3,
+    "models_1indexed": [
+      16,
+      27,
+      47
+    ],
+    "test_roi": 1.0235685752330226,
+    "test_hit_rate": 0.22769640479360853,
+    "test_hits": 171,
+    "test_mean_odds": 4.495321637426901,
+    "test_payout": 76870.0,
+    "val_roi": 0.8189081225033289,
+    "val_hit_rate": 0.2396804260985353,
+    "val_mean_odds": 3.4166666666666665
+  },
+  {
+    "trial_idx": 31658,
+    "k": 3,
+    "models_1indexed": [
+      20,
+      27,
+      32
+    ],
+    "test_roi": 1.0130492676431424,
+    "test_hit_rate": 0.21571238348868177,
+    "test_hits": 162,
+    "test_mean_odds": 4.696296296296296,
+    "test_payout": 76080.0,
+    "val_roi": 0.7820239680426099,
+    "val_hit_rate": 0.2210386151797603,
+    "val_mean_odds": 3.5379518072289153
+  },
+  {
+    "trial_idx": 36002,
+    "k": 3,
+    "models_1indexed": [
+      8,
+      27,
+      49
+    ],
+    "test_roi": 1.0274300932090545,
+    "test_hit_rate": 0.23169107856191745,
+    "test_hits": 174,
+    "test_mean_odds": 4.43448275862069,
+    "test_payout": 77160.0,
+    "val_roi": 0.7716378162450066,
+    "val_hit_rate": 0.22902796271637815,
+    "val_mean_odds": 3.369186046511628
+  },
+  {
+    "trial_idx": 37340,
+    "k": 4,
+    "models_1indexed": [
+      3,
+      7,
+      19,
+      27
+    ],
+    "test_roi": 1.0098535286284953,
+    "test_hit_rate": 0.22902796271637815,
+    "test_hits": 172,
+    "test_mean_odds": 4.409302325581395,
+    "test_payout": 75840.0,
+    "val_roi": 0.8439414114513981,
+    "val_hit_rate": 0.2237017310252996,
+    "val_mean_odds": 3.7726190476190475
+  },
+  {
+    "trial_idx": 37474,
+    "k": 3,
+    "models_1indexed": [
+      21,
+      24,
+      30
+    ],
+    "test_roi": 1.0106524633821572,
+    "test_hit_rate": 0.23568575233022637,
+    "test_hits": 177,
+    "test_mean_odds": 4.288135593220339,
+    "test_payout": 75900.0,
+    "val_roi": 0.8149134487350199,
+    "val_hit_rate": 0.23169107856191745,
+    "val_mean_odds": 3.5172413793103448
+  },
+  {
+    "trial_idx": 38440,
+    "k": 5,
+    "models_1indexed": [
+      3,
+      27,
+      28,
+      30,
+      39
+    ],
+    "test_roi": 1.011717709720373,
+    "test_hit_rate": 0.2436750998668442,
+    "test_hits": 183,
+    "test_mean_odds": 4.1519125683060105,
+    "test_payout": 75980.0,
+    "val_roi": 0.8732356857523302,
+    "val_hit_rate": 0.24101198402130491,
+    "val_mean_odds": 3.6232044198895026
+  },
+  {
+    "trial_idx": 38788,
+    "k": 5,
+    "models_1indexed": [
+      22,
+      24,
+      27,
+      44,
+      46
+    ],
+    "test_roi": 1.0798934753661784,
+    "test_hit_rate": 0.23302263648468707,
+    "test_hits": 175,
+    "test_mean_odds": 4.634285714285714,
+    "test_payout": 81100.0,
+    "val_roi": 0.7272969374167776,
+    "val_hit_rate": 0.22902796271637815,
+    "val_mean_odds": 3.1755813953488374
+  },
+  {
+    "trial_idx": 43404,
+    "k": 2,
+    "models_1indexed": [
+      24,
+      28
+    ],
+    "test_roi": 1.1046604527296937,
+    "test_hit_rate": 0.23435419440745672,
+    "test_hits": 176,
+    "test_mean_odds": 4.713636363636364,
+    "test_payout": 82960.0,
+    "val_roi": 0.8856191744340879,
+    "val_hit_rate": 0.2170439414114514,
+    "val_mean_odds": 4.080368098159509
+  },
+  {
+    "trial_idx": 44907,
+    "k": 2,
+    "models_1indexed": [
+      27,
+      31
+    ],
+    "test_roi": 1.0278295605858856,
+    "test_hit_rate": 0.2197070572569907,
+    "test_hits": 165,
+    "test_mean_odds": 4.678181818181818,
+    "test_payout": 77190.0,
+    "val_roi": 0.7651131824234354,
+    "val_hit_rate": 0.22636484687083888,
+    "val_mean_odds": 3.3800000000000003
+  },
+  {
+    "trial_idx": 53199,
+    "k": 4,
+    "models_1indexed": [
+      24,
+      27,
+      41,
+      49
+    ],
+    "test_roi": 1.0422103861517975,
+    "test_hit_rate": 0.2436750998668442,
+    "test_hits": 183,
+    "test_mean_odds": 4.277049180327869,
+    "test_payout": 78270.0,
+    "val_roi": 0.7099866844207723,
+    "val_hit_rate": 0.2237017310252996,
+    "val_mean_odds": 3.173809523809524
+  },
+  {
+    "trial_idx": 63393,
+    "k": 3,
+    "models_1indexed": [
+      24,
+      46,
+      49
+    ],
+    "test_roi": 1.0083888149134488,
+    "test_hit_rate": 0.22902796271637815,
+    "test_hits": 172,
+    "test_mean_odds": 4.402906976744186,
+    "test_payout": 75730.0,
+    "val_roi": 1.125832223701731,
+    "val_hit_rate": 0.2623169107856192,
+    "val_mean_odds": 4.291878172588833
+  },
+  {
+    "trial_idx": 67707,
+    "k": 7,
+    "models_1indexed": [
+      3,
+      10,
+      27,
+      34,
+      41,
+      42,
+      45
+    ],
+    "test_roi": 1.007989347536618,
+    "test_hit_rate": 0.25166444740346205,
+    "test_hits": 189,
+    "test_mean_odds": 4.005291005291006,
+    "test_payout": 75700.0,
+    "val_roi": 0.8251664447403462,
+    "val_hit_rate": 0.2663115845539281,
+    "val_mean_odds": 3.0985
+  },
+  {
+    "trial_idx": 80070,
+    "k": 4,
+    "models_1indexed": [
+      4,
+      22,
+      27,
+      47
+    ],
+    "test_roi": 1.0061251664447404,
+    "test_hit_rate": 0.2210386151797603,
+    "test_hits": 166,
+    "test_mean_odds": 4.551807228915663,
+    "test_payout": 75560.0,
+    "val_roi": 0.7683089214380826,
+    "val_hit_rate": 0.22237017310252996,
+    "val_mean_odds": 3.4550898203592815
+  },
+  {
+    "trial_idx": 83443,
+    "k": 2,
+    "models_1indexed": [
+      18,
+      27
+    ],
+    "test_roi": 1.0211717709720374,
+    "test_hit_rate": 0.21438082556591212,
+    "test_hits": 161,
+    "test_mean_odds": 4.763354037267081,
+    "test_payout": 76690.0,
+    "val_roi": 0.7905459387483356,
+    "val_hit_rate": 0.22636484687083888,
+    "val_mean_odds": 3.492352941176471
+  },
+  {
+    "trial_idx": 87660,
+    "k": 3,
+    "models_1indexed": [
+      24,
+      27,
+      44
+    ],
+    "test_roi": 1.0205059920106525,
+    "test_hit_rate": 0.22902796271637815,
+    "test_hits": 172,
+    "test_mean_odds": 4.455813953488372,
+    "test_payout": 76640.0,
+    "val_roi": 0.6676431424766978,
+    "val_hit_rate": 0.21304926764314247,
+    "val_mean_odds": 3.13375
+  },
+  {
+    "trial_idx": 98399,
+    "k": 8,
+    "models_1indexed": [
+      3,
+      10,
+      15,
+      19,
+      27,
+      28,
+      40,
+      41
+    ],
+    "test_roi": 1.0475366178428762,
+    "test_hit_rate": 0.2596537949400799,
+    "test_hits": 195,
+    "test_mean_odds": 4.034358974358975,
+    "test_payout": 78670.0,
+    "val_roi": 0.7661784287616511,
+    "val_hit_rate": 0.24766977363515313,
+    "val_mean_odds": 3.093548387096774
+  },
+  {
+    "trial_idx": 98642,
+    "k": 4,
+    "models_1indexed": [
+      15,
+      22,
+      27,
+      48
+    ],
+    "test_roi": 1.0390146471371504,
+    "test_hit_rate": 0.22769640479360853,
+    "test_hits": 171,
+    "test_mean_odds": 4.563157894736841,
+    "test_payout": 78030.0,
+    "val_roi": 0.7198402130492676,
+    "val_hit_rate": 0.22503328894806923,
+    "val_mean_odds": 3.1988165680473375
+  },
+  {
+    "trial_idx": 102315,
+    "k": 3,
+    "models_1indexed": [
+      7,
+      17,
+      27
+    ],
+    "test_roi": 1.0174434087882822,
+    "test_hit_rate": 0.2210386151797603,
+    "test_hits": 166,
+    "test_mean_odds": 4.603012048192771,
+    "test_payout": 76410.0,
+    "val_roi": 0.766444740346205,
+    "val_hit_rate": 0.22503328894806923,
+    "val_mean_odds": 3.4059171597633138
+  },
+  {
+    "trial_idx": 102364,
+    "k": 5,
+    "models_1indexed": [
+      27,
+      30,
+      41,
+      44,
+      46
+    ],
+    "test_roi": 1.0474034620505992,
+    "test_hit_rate": 0.25033288948069243,
+    "test_hits": 188,
+    "test_mean_odds": 4.18404255319149,
+    "test_payout": 78660.0,
+    "val_roi": 0.7034620505992011,
+    "val_hit_rate": 0.23302263648468707,
+    "val_mean_odds": 3.0188571428571427
+  },
+  {
+    "trial_idx": 102539,
+    "k": 6,
+    "models_1indexed": [
+      7,
+      17,
+      27,
+      39,
+      40,
+      48
+    ],
+    "test_roi": 1.007323568575233,
+    "test_hit_rate": 0.24101198402130491,
+    "test_hits": 181,
+    "test_mean_odds": 4.179558011049724,
+    "test_payout": 75650.0,
+    "val_roi": 0.6701731025299601,
+    "val_hit_rate": 0.22636484687083888,
+    "val_mean_odds": 2.9605882352941175
+  },
+  {
+    "trial_idx": 104157,
+    "k": 4,
+    "models_1indexed": [
+      27,
+      32,
+      44,
+      45
+    ],
+    "test_roi": 1.0283621837549934,
+    "test_hit_rate": 0.22636484687083888,
+    "test_hits": 170,
+    "test_mean_odds": 4.542941176470588,
+    "test_payout": 77230.0,
+    "val_roi": 0.7041278295605858,
+    "val_hit_rate": 0.21571238348868177,
+    "val_mean_odds": 3.2641975308641973
+  },
+  {
+    "trial_idx": 106079,
+    "k": 5,
+    "models_1indexed": [
+      22,
+      26,
+      27,
+      40,
+      49
+    ],
+    "test_roi": 1.0021304926764314,
+    "test_hit_rate": 0.23169107856191745,
+    "test_hits": 174,
+    "test_mean_odds": 4.325287356321839,
+    "test_payout": 75260.0,
+    "val_roi": 0.6966711051930758,
+    "val_hit_rate": 0.2303595206391478,
+    "val_mean_odds": 3.024277456647399
+  },
+  {
+    "trial_idx": 109763,
+    "k": 4,
+    "models_1indexed": [
+      13,
+      27,
+      31,
+      41
+    ],
+    "test_roi": 1.0732356857523302,
+    "test_hit_rate": 0.23302263648468707,
+    "test_hits": 175,
+    "test_mean_odds": 4.605714285714286,
+    "test_payout": 80600.0,
+    "val_roi": 0.8323568575233022,
+    "val_hit_rate": 0.24101198402130491,
+    "val_mean_odds": 3.4535911602209945
+  },
+  {
+    "trial_idx": 113861,
+    "k": 4,
+    "models_1indexed": [
+      17,
+      27,
+      44,
+      45
+    ],
+    "test_roi": 1.0009320905459387,
+    "test_hit_rate": 0.22237017310252996,
+    "test_hits": 167,
+    "test_mean_odds": 4.50119760479042,
+    "test_payout": 75170.0,
+    "val_roi": 0.7205059920106525,
+    "val_hit_rate": 0.2237017310252996,
+    "val_mean_odds": 3.2208333333333337
+  },
+  {
+    "trial_idx": 115790,
+    "k": 4,
+    "models_1indexed": [
+      10,
+      24,
+      42,
+      46
+    ],
+    "test_roi": 1.0113182423435418,
+    "test_hit_rate": 0.25166444740346205,
+    "test_hits": 189,
+    "test_mean_odds": 4.018518518518518,
+    "test_payout": 75950.0,
+    "val_roi": 0.9307589880159787,
+    "val_hit_rate": 0.2769640479360852,
+    "val_mean_odds": 3.360576923076923
+  },
+  {
+    "trial_idx": 120745,
+    "k": 4,
+    "models_1indexed": [
+      3,
+      4,
+      8,
+      27
+    ],
+    "test_roi": 1.0388814913448734,
+    "test_hit_rate": 0.23302263648468707,
+    "test_hits": 175,
+    "test_mean_odds": 4.458285714285714,
+    "test_payout": 78020.0,
+    "val_roi": 0.8864181091877497,
+    "val_hit_rate": 0.24766977363515313,
+    "val_mean_odds": 3.579032258064516
+  },
+  {
+    "trial_idx": 128667,
+    "k": 3,
+    "models_1indexed": [
+      2,
+      27,
+      41
+    ],
+    "test_roi": 1.0286284953395473,
+    "test_hit_rate": 0.2396804260985353,
+    "test_hits": 180,
+    "test_mean_odds": 4.291666666666667,
+    "test_payout": 77250.0,
+    "val_roi": 0.6796271637816245,
+    "val_hit_rate": 0.2210386151797603,
+    "val_mean_odds": 3.0746987951807228
+  },
+  {
+    "trial_idx": 131089,
+    "k": 2,
+    "models_1indexed": [
+      7,
+      27
+    ],
+    "test_roi": 1.0284953395472702,
+    "test_hit_rate": 0.2170439414114514,
+    "test_hits": 163,
+    "test_mean_odds": 4.738650306748466,
+    "test_payout": 77240.0,
+    "val_roi": 0.7031957390146472,
+    "val_hit_rate": 0.20372836218375498,
+    "val_mean_odds": 3.4516339869281047
+  },
+  {
+    "trial_idx": 131774,
+    "k": 5,
+    "models_1indexed": [
+      24,
+      27,
+      41,
+      47,
+      49
+    ],
+    "test_roi": 1.0217043941411452,
+    "test_hit_rate": 0.25166444740346205,
+    "test_hits": 189,
+    "test_mean_odds": 4.059788359788359,
+    "test_payout": 76730.0,
+    "val_roi": 0.7866844207723036,
+    "val_hit_rate": 0.24900133155792276,
+    "val_mean_odds": 3.1593582887700533
+  },
+  {
+    "trial_idx": 139527,
+    "k": 4,
+    "models_1indexed": [
+      3,
+      15,
+      27,
+      50
+    ],
+    "test_roi": 1.0155792276964049,
+    "test_hit_rate": 0.2436750998668442,
+    "test_hits": 183,
+    "test_mean_odds": 4.16775956284153,
+    "test_payout": 76270.0,
+    "val_roi": 0.733288948069241,
+    "val_hit_rate": 0.23435419440745672,
+    "val_mean_odds": 3.128977272727273
+  },
+  {
+    "trial_idx": 146924,
+    "k": 6,
+    "models_1indexed": [
+      3,
+      17,
+      26,
+      27,
+      46,
+      49
+    ],
+    "test_roi": 1.0640479360852197,
+    "test_hit_rate": 0.2569906790945406,
+    "test_hits": 193,
+    "test_mean_odds": 4.140414507772021,
+    "test_payout": 79910.0,
+    "val_roi": 0.7109187749667111,
+    "val_hit_rate": 0.25432756324900135,
+    "val_mean_odds": 2.7952879581151833
+  },
+  {
+    "trial_idx": 147485,
+    "k": 4,
+    "models_1indexed": [
+      17,
+      27,
+      28,
+      47
+    ],
+    "test_roi": 1.0466045272969373,
+    "test_hit_rate": 0.2303595206391478,
+    "test_hits": 173,
+    "test_mean_odds": 4.543352601156069,
+    "test_payout": 78600.0,
+    "val_roi": 0.7833555259653795,
+    "val_hit_rate": 0.23169107856191745,
+    "val_mean_odds": 3.3810344827586203
+  },
+  {
+    "trial_idx": 149062,
+    "k": 4,
+    "models_1indexed": [
+      3,
+      22,
+      27,
+      50
+    ],
+    "test_roi": 1.026098535286285,
+    "test_hit_rate": 0.23435419440745672,
+    "test_hits": 176,
+    "test_mean_odds": 4.378409090909091,
+    "test_payout": 77060.0,
+    "val_roi": 0.7007989347536618,
+    "val_hit_rate": 0.23169107856191745,
+    "val_mean_odds": 3.0247126436781606
+  }
+]

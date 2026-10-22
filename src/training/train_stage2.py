@@ -134,6 +134,8 @@ def train_race_meta_model(
             n_batches += 1
 
         avg_loss = epoch_loss / max(1, n_batches)
+        if hasattr(torch, "mps") and torch.backends.mps.is_available():
+            torch.mps.empty_cache()
 
         # 独立した Validation データ (X_val_meta) による Early Stopping 評価
         model.eval()

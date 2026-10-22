@@ -119,6 +119,8 @@ def train_single_stage1_model(
             n_batches += 1
 
         avg_loss = epoch_loss / max(1, n_batches)
+        if hasattr(torch, "mps") and torch.backends.mps.is_available():
+            torch.mps.empty_cache()
 
         # Validation 評価
         model.eval()

@@ -16,7 +16,7 @@ def test_components():
     logger.info(">>> Starting Race-Level Pipeline Components Test <<<")
     
     # 1. データローダーのテスト
-    data_dir = "/Users/hinomasafumi/Data/main"
+    data_dir = "/Users/hino/Program/Python/KeibaData/Data/RESULT/MAIN"
     logger.info("Testing Data Loader with sample_n_races_per_year=3...")
     
     df_train, df_val, df_test, bac_cols = get_train_val_test_datasets(

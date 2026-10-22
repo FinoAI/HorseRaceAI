@@ -18,6 +18,9 @@ data_processed/
 test_artifacts/
 *.pth
 *.csv
+*.pkl
+*.npy
+*.npz
 
 # Logs and scratch
 *.log

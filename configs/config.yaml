@@ -1,8 +1,8 @@
 # 競馬AI 設定ファイル (レース単位入力・アンサンブル)
 data:
-  data_dir: "/Users/hinomasafumi/Data/main"
+  data_dir: "/Users/hino/Program/Python/KeibaData/Data/RESULT/MAIN"
   bac_filename: "BAC_KAB.csv"
-  train_years: [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
+  train_years: [2018, 2019, 2020, 2021, 2022, 2023]
   val_test_years: [2024, 2025]
   val_ratio: 0.5 # 2024+2025 のうち半分をVal、半分をTest
   random_seed: 42
@@ -44,7 +44,7 @@ feature_selection:
 # 前段モデル設定 (Stage 1: レース単位入力)
 stage1:
   num_models: 10
-  multiplier: 32          # 入力層: (出走頭数18 × 特徴量数) × 32
+  multiplier: 8           # 入力層: (出走頭数18 × 特徴量数) × 8 (約7,500万パラメータ, 8層構造)
   reduction_ratio: 0.5    # 隠れ層の減衰ペース: 最大1/2ずつ縮小
   dropout: 0.2
   learning_rate: 0.0005
@@ -74,5 +74,5 @@ simulation:
 
 # 保存先パス
 paths:
-  artifacts_dir: "/Users/hinomasafumi/program/HorseRaceAI/artifacts_models"
-  data_processed_dir: "/Users/hinomasafumi/program/HorseRaceAI/data_processed"
+  artifacts_dir: "/Users/hino/Program/Python/KeibaData/HorseRaceAI/artifacts_models"
+  data_processed_dir: "/Users/hino/Program/Python/KeibaData/HorseRaceAI/data_processed"

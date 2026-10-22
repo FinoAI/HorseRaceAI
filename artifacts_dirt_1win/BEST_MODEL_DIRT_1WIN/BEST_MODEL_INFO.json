@@ -1,0 +1,62 @@
+{
+  "model_name": "BEST_MODEL_DIRT_1WIN",
+  "task": "Dirt 1-Win+ Class Win Prediction",
+  "selection_mode": "prob (Pure Top-1 Prob Win Bet, No EV filtering)",
+  "components": [
+    {
+      "model_idx": 24,
+      "weights_file": "model_24.pth",
+      "features_file": "features_24.json",
+      "single_test_hit_rate": 0.2157,
+      "single_test_roi": 1.0577,
+      "single_test_mean_odds": 4.90
+    },
+    {
+      "model_idx": 49,
+      "weights_file": "model_49.pth",
+      "features_file": "features_49.json",
+      "single_test_hit_rate": 0.2157,
+      "single_test_roi": 0.9095,
+      "single_test_mean_odds": 4.22
+    }
+  ],
+  "ensemble_evaluation": {
+    "test_dataset": {
+      "period": "2025-2026 Shuffled Test Set (50%)",
+      "total_races": 751,
+      "total_horses": 10320,
+      "unit_bet": 100,
+      "total_bet": 75100,
+      "hits": 175,
+      "hit_rate": 0.233023,
+      "mean_hit_odds": 5.028571,
+      "roi": 1.171771,
+      "total_payout": 88000.0,
+      "net_profit": 12900.0
+    },
+    "val_dataset": {
+      "period": "2025-2026 Shuffled Val Set (50%)",
+      "total_races": 751,
+      "roi": 1.167883,
+      "hit_rate": 0.250333
+    },
+    "calibration_key_insight": {
+      "zone_10_to_20_percent": {
+        "races": 224,
+        "hits": 37,
+        "win_rate": 0.1652,
+        "mean_hit_odds": 11.073,
+        "roi": 1.829,
+        "payout": 40970.0,
+        "note": "Huge alpha zone where market misprices true contenders in contentious races"
+      }
+    }
+  },
+  "training_spec": {
+    "train_period": "2009-2024 (16 Years, 14,742 races)",
+    "architecture": "RaceLevelStage1NN (8 Residual Blocks, Pyramid, 3600 Input Dim)",
+    "features_per_horse": 200,
+    "max_horses": 18
+  },
+  "created_at": "2026-09-30"
+}

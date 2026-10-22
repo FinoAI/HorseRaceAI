@@ -1,0 +1,109 @@
+[
+  {
+    "pattern_id": 1,
+    "chain_id": 6,
+    "step": 2,
+    "start_model": 2,
+    "chain_models": [
+      2,
+      34
+    ],
+    "final_model_idx": 34,
+    "val_roi": 1.1271637816245006,
+    "val_hit_rate": 0.22769640479360853,
+    "val_hits": 171,
+    "val_mean_odds": 4.950292397660819,
+    "val_payout": 84650.0,
+    "test_roi": 0.8134487350199734,
+    "test_hit_rate": 0.22503328894806923,
+    "test_hits": 169,
+    "test_mean_odds": 3.614792899408284,
+    "test_payout": 61090.0
+  },
+  {
+    "pattern_id": 2,
+    "chain_id": 13,
+    "step": 1,
+    "start_model": 45,
+    "chain_models": [
+      45
+    ],
+    "final_model_idx": 45,
+    "val_roi": 1.3359520639147804,
+    "val_hit_rate": 0.14247669773635152,
+    "val_hits": 107,
+    "val_mean_odds": 9.376635514018691,
+    "val_payout": 100330.0,
+    "test_roi": 0.8347536617842877,
+    "test_hit_rate": 0.1278295605858855,
+    "test_hits": 96,
+    "test_mean_odds": 6.530208333333333,
+    "test_payout": 62690.0
+  },
+  {
+    "pattern_id": 3,
+    "chain_id": 13,
+    "step": 2,
+    "start_model": 45,
+    "chain_models": [
+      45,
+      11
+    ],
+    "final_model_idx": 11,
+    "val_roi": 1.010785619174434,
+    "val_hit_rate": 0.24234354194407456,
+    "val_hits": 182,
+    "val_mean_odds": 4.170879120879121,
+    "val_payout": 75910.0,
+    "test_roi": 0.681491344873502,
+    "test_hit_rate": 0.21571238348868177,
+    "test_hits": 162,
+    "test_mean_odds": 3.1592592592592594,
+    "test_payout": 51180.0
+  },
+  {
+    "pattern_id": 4,
+    "chain_id": 15,
+    "step": 4,
+    "start_model": 8,
+    "chain_models": [
+      8,
+      43,
+      31,
+      12
+    ],
+    "final_model_idx": 12,
+    "val_roi": 1.018242343541944,
+    "val_hit_rate": 0.237017310252996,
+    "val_hits": 178,
+    "val_mean_odds": 4.296067415730337,
+    "val_payout": 76470.0,
+    "test_roi": 0.6901464713715046,
+    "test_hit_rate": 0.19840213049267644,
+    "test_hits": 149,
+    "test_mean_odds": 3.478523489932886,
+    "test_payout": 51830.0
+  },
+  {
+    "pattern_id": 5,
+    "chain_id": 17,
+    "step": 3,
+    "start_model": 45,
+    "chain_models": [
+      45,
+      31,
+      8
+    ],
+    "final_model_idx": 8,
+    "val_roi": 1.0054593874833555,
+    "val_hit_rate": 0.23435419440745672,
+    "val_hits": 176,
+    "val_mean_odds": 4.290340909090909,
+    "val_payout": 75510.0,
+    "test_roi": 0.8559254327563249,
+    "test_hit_rate": 0.21171770972037285,
+    "test_hits": 159,
+    "test_mean_odds": 4.042767295597485,
+    "test_payout": 64280.0
+  }
+]
